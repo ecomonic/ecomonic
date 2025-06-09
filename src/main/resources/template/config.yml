@@ -1,0 +1,42 @@
+# ----------------------------------------------------------
+# Ecomonic
+# ----------------------------------------------------------
+# This file is used to configure the Economic plugin for a Minecraft server.
+
+# Logging Configuration
+logging:
+  # Logging strategy for the Ecomonic plugin
+  # There are three options for logging strategy:
+  # - file: Logs to a file
+  # - console: Logs to the console
+  # - database: Logs to a database
+  strategy: ["file", "database"]
+
+  # Path to the log file if the logging strategy is set to file
+  file: "./economic.log"
+
+# Ecomonic Database Configuration
+datasource:
+  # Type of database to use
+  # There are five options for cache:
+  # - sqlite: Uses SQLite database file
+  # - monic: Uses Monic transaction server
+  # - mysql: Uses MySQL database
+  # - mariadb: Uses MariaDB database
+  # - postgresql: Uses PostgreSQL database
+  type: "sqlite"
+
+  # Path to the SQLite database file or host for other databases
+  host: "./economic.db"
+
+  # Cache settings for the database
+  # There are two options for cache:
+  # - yes: Prioritize cached data
+  # - no: Prioritize database data
+  cache: "yes"
+
+  # Uncomment the following lines to configure a MySQL, MariaDB, or PostgreSQL database connection
+  #port: 3306 # Port number for the database connection
+  #database: "economic" # Name of the database to connect to (only for MySQL, MariaDB, PostgreSQL)
+  #username: "root" # Username for the database connection (only for MySQL, MariaDB, PostgreSQL)
+  #password: "password" # Password for the database connection (only for MySQL, MariaDB, PostgreSQL)
