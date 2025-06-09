@@ -3,6 +3,7 @@ package net.yellowstrawberry.ecomonic.api;
 import net.yellowstrawberry.ecomonic.api.account.Account;
 import net.yellowstrawberry.ecomonic.api.listener.AccountListener;
 import net.yellowstrawberry.ecomonic.api.listener.EcomonicListener;
+import net.yellowstrawberry.ecomonic.data.DataSource;
 
 import java.util.List;
 import java.util.UUID;
@@ -18,12 +19,22 @@ import java.util.UUID;
  * @version 0.0.1
  */
 public interface Ecomonic {
+
+    public static Ecomonic INSTANCE = null;
+
     /**
      * Returns the version of the Ecomonic API.
      *
      * @return the version string
      */
     String getVersion();
+
+    /**
+     * Returns the data source used by the Ecomonic API.
+     *
+     * @return the DataSource object
+     */
+    DataSource getDataSource();
 
     /**
      * Returns the account with the specified ID.

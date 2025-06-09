@@ -1,7 +1,7 @@
 package net.yellowstrawberry.ecomonic.api.account;
 
-import net.yellowstrawberry.ecomonic.EcomonicPlugin;
-
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.UUID;
 
 /**
@@ -14,31 +14,23 @@ import java.util.UUID;
  * @since 0.0.1
  * @version 0.0.1
  */
-public abstract class Account {
-
-    private final Long id;
-    private double balance;
-
-    public Account(Long id, double balance) {
-        this.id = id;
-        this.balance = balance;
-    }
+public interface Account {
 
     /**
      * Returns the unique identifier of the account owner.
      *
      * @return the UUID of the account owner
      */
-    public abstract UUID getOwner();
+    @Nullable
+    UUID getOwner();
 
     /**
      * Returns the unique ID of the account.
      *
      * @return the account ID
      */
-    public Long getId() {
-        return id;
-    }
+    @Nonnull
+    Long getId();
 
     /**
      * Attempts to withdraw the specified amount from the account.
@@ -46,9 +38,7 @@ public abstract class Account {
      * @param amount the amount to withdraw
      * @return true if the withdrawal was successful, false otherwise
      */
-    public boolean withdraw(double amount) {
-        return EcomonicPlugin.ecomonic.withdraw(getId(), amount);
-    }
+    boolean withdraw(double amount);
 
     /**
      * Attempts to deposit the specified amount into the account.
@@ -56,9 +46,7 @@ public abstract class Account {
      * @param amount the amount to deposit
      * @return true if the deposit was successful, false otherwise
      */
-    public boolean deposit(double amount) {
-        return EcomonicPlugin.ecomonic.deposit(getId(), amount);
-    }
+    boolean deposit(double amount);
 
     /**
      * Sets the account balance to the specified amount.
@@ -66,9 +54,7 @@ public abstract class Account {
      * @param amount the new balance to set
      * @return true if the balance was set successfully, false otherwise
      */
-    public boolean set(double amount) {
-        return EcomonicPlugin.ecomonic.set(getId(), amount);
-    }
+    boolean set(double amount);
 
     /**
      * Checks if the account has at least the specified amount.
@@ -76,16 +62,12 @@ public abstract class Account {
      * @param amount the amount to check
      * @return true if the account has at least the specified amount, false otherwise
      */
-    public boolean has(double amount) {
-        return EcomonicPlugin.ecomonic.has(getId(), amount);
-    }
+    boolean has(double amount);
 
     /**
      * Returns the current balance of the account.
      *
      * @return the account balance
      */
-    public double getBalance() {
-        return EcomonicPlugin.ecomonic.getBalance(getId());
-    }
+    double getBalance();
 }
