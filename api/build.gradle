@@ -1,0 +1,57 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+group = 'net.yellowstrawberry'
+version = rootProject.version
+
+publishing {
+    repositories {
+        mavenLocal()
+    }
+    publications {
+        maven(MavenPublication) {
+            artifactId = 'ecomonic-api'
+            pom {
+                name = 'Ecomonic API'
+                description = 'An API for Ecomonic, a Minecraft plugin that provides an economy system.'
+                licenses {
+                    license {
+                        name = 'GNU GENERAL PUBLIC LICENSE'
+                        url = 'https://raw.githubusercontent.com/ecomonic/ecomonic/refs/heads/main/LICENSE'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'Yellowstrawberrys'
+                        name = 'Yellowstrawberry'
+                        email = 'eunsoo3009@hotmail.com'
+                    }
+                }
+            }
+            from(components.java)
+        }
+    }
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven {
+        name = 'papermc'
+        url = 'https://repo.papermc.io/repository/maven-public/'
+    }
+}
+
+dependencies {
+    compileOnly 'io.papermc.paper:paper-api:1.21.5-R0.1-SNAPSHOT'
+    implementation 'org.jetbrains:annotations:15.0'
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+}

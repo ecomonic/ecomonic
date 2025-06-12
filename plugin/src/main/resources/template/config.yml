@@ -1,0 +1,66 @@
+# ----------------------------------------------------------
+# Ecomonic
+# ----------------------------------------------------------
+# This file is used to configure the Ecomonic plugin for a Minecraft server.
+
+# Account Configuration
+account:
+  # Account Creation Configuration
+  auto_create: true # Automatically create accounts for players when they join the server
+  max_accounts: 3 # Maximum number of accounts that can be created per user
+
+  # Account Balance Configuration
+  enable_negative_balance: false # Allow accounts to have negative balances
+  max_negative_balance: -1000 # Maximum negative balance allowed for accounts
+
+
+# Transaction Configuration
+transaction:
+  # Transaction Fee Configuration
+  enable_transaction_fees: true # Enable transaction fees for transfers
+  transaction_fee_percentage: 2.5 # Percentage of the transaction amount charged as a fee
+
+  # Transaction Limits Configuration
+  max_transaction_amount: 10000 # Maximum amount that can be transferred in a single transaction
+  min_transaction_amount: 1 # Minimum amount that can be transferred in a single transaction
+  transaction_cooldown: 60 # Cooldown period in seconds between transactions for a player
+
+
+# Logging Configuration
+logging:
+  # Logging strategy for the Ecomonic plugin
+  # There are three options for logging strategy:
+  # - file: Logs to a file
+  # - console: Logs to the console
+  # - database: Logs to a database
+  strategy: ["file", "database"]
+
+  # Path to the log file if the logging strategy is set to file
+  file: "./ecomonic.log"
+
+
+# Ecomonic Database Configuration
+datasource:
+  # Type of database to use
+  # There are five options for cache:
+  # - sqlite: Uses SQLite database file
+  # - monic: Uses Monic transaction server
+  # - mysql: Uses MySQL database
+  # - mariadb: Uses MariaDB database
+  # - postgresql: Uses PostgreSQL database
+  type: "sqlite"
+
+  # Path to the SQLite database file or host for other databases
+  host: "./ecomonic.db"
+
+  # Cache settings for the database
+  # There are two options for cache:
+  # - yes: Prioritize cached data
+  # - no: Prioritize database data
+  cache: "yes"
+
+  # Uncomment the following lines to configure a MySQL, MariaDB, or PostgreSQL database connection
+  #port: 3306 # Port number for the database connection
+  #database: "ecomonic" # Name of the database to connect to (only for MySQL, MariaDB, PostgreSQL)
+  #username: "root" # Username for the database connection (only for MySQL, MariaDB, PostgreSQL)
+  #password: "password" # Password for the database connection (only for MySQL, MariaDB, PostgreSQL)

@@ -7,16 +7,9 @@ version = '0.0.1-SNAPSHOT'
 
 repositories {
     mavenCentral()
-    maven {
-        name = 'papermc'
-        url = 'https://repo.papermc.io/repository/maven-public/'
-    }
 }
 
 dependencies {
-    compileOnly 'io.papermc.paper:paper-api:1.21.5-R0.1-SNAPSHOT'
-    implementation 'org.xerial:sqlite-jdbc:3.49.1.0'
-    implementation 'io.hypersistence:hypersistence-tsid:2.1.4'
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -37,14 +30,5 @@ tasks.withType(JavaCompile).configureEach {
 
     if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
         options.release.set(targetJavaVersion)
-    }
-}
-
-processResources {
-    def props = [version: version]
-    inputs.properties props
-    filteringCharset 'UTF-8'
-    filesMatching('plugin.yml') {
-        expand props
     }
 }

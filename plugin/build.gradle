@@ -1,0 +1,44 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+group = 'net.yellowstrawberry'
+version = rootProject.version
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven {
+        name = 'papermc'
+        url = 'https://repo.papermc.io/repository/maven-public/'
+    }
+}
+
+dependencies {
+    compileOnly 'io.papermc.paper:paper-api:1.21.5-R0.1-SNAPSHOT'
+    implementation "net.yellowstrawberry:ecomonic-api:${rootProject.version}"
+    implementation 'org.xerial:sqlite-jdbc:3.49.1.0'
+    implementation 'io.hypersistence:hypersistence-tsid:2.1.4'
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+build {
+    dependsOn ':api:publishToMavenLocal'
+}
+
+shadowJar {
+    exclude 'META-INF/**'
+    exclude('io.papermc.paper:paper-api')
+}
+
+processResources {
+    def props = [version: version]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
+    }
+}
