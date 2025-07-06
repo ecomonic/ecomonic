@@ -1,4 +1,4 @@
-package net.yellowstrawberry.ecomonic.data.sqlite;
+package net.yellowstrawberry.ecomonic.data.sources;
 
 import net.yellowstrawberry.ecomonic.api.account.Account;
 import net.yellowstrawberry.ecomonic.api.account.CachedAccount;

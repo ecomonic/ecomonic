@@ -12,8 +12,8 @@ import net.yellowstrawberry.ecomonic.api.listener.AccountListener;
 import net.yellowstrawberry.ecomonic.api.listener.EcomonicListener;
 import net.yellowstrawberry.ecomonic.command.CommandRegistrar;
 import net.yellowstrawberry.ecomonic.config.Configurations;
-import net.yellowstrawberry.ecomonic.data.DatabaseType;
-import net.yellowstrawberry.ecomonic.data.sqlite.SQLiteDataSource;
+import net.yellowstrawberry.ecomonic.data.sources.PostgresDataSource;
+import net.yellowstrawberry.ecomonic.data.sources.SQLiteDataSource;
 import net.yellowstrawberry.ecomonic.data.utils.DatabaseUtils;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -62,6 +62,7 @@ public class EcomonicPlugin extends JavaPlugin implements Ecomonic, Listener {
 
         source = switch (Configurations.datasourceType) {
             case SQLITE -> new SQLiteDataSource();
+            case POSTGRESQL -> new PostgresDataSource();
             default -> throw new UnsupportedOperationException("Unsupported value: " + Configurations.datasourceType);
         };
 
