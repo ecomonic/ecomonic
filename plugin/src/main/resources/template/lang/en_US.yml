@@ -1,0 +1,44 @@
+locale: 'en_US'
+coverage: [ 'en_GB', 'en_AU', 'en_NZ' ]
+
+ecomonic:
+
+  general:
+    click_to_copy: "Click to copy"
+
+    error:
+      not_a_player: '<red>You must be a player to use this command</red>'
+      permission: "<red>You don't have permission to use this command</red>"
+      unexpected_error: '<red>Unexpected error: $msg</red>'
+
+  account:
+    created:
+      self: '<green>Created new account with ID: $id</green>'
+      admin: '<green>Created new account with ID: $id</green>'
+    primary: '<green>Set account $id as primary</green>'
+    deleted:
+      self:
+        normal: '<green>Account $id has been deleted</green>'
+        primary: '<green>Account $id has been deleted. Now, your primary account is $primary</green>'
+      admin: '<green>Account $id has been deleted</green>'
+    set: '<green>Set balance of account $id to $amount</green>'
+    transfer: '<green>Successfully transferred $amount from account $from to account $to (Fee: $fee)</green>'
+
+    error:
+      no_account: "<red>You don't have an account</red>"
+      not_found: '<red>Account not found</red>'
+      failed_to_set: '<red>Failed to set account balance</red>'
+      max_accounts:
+        self: '<red>You have reached the maximum number of accounts</red>'
+        admin: '<red>Player has reached maximum number of accounts</red>'
+      not_a_owner: "<red>You don't own this account</red>"
+      only_account: "<red>Cannot delete your only account</red>"
+      non_zero: "<red>Cannot delete account with non-zero balance</red>"
+      no_accounts: "<red>You don't have any accounts</red>"
+      below_min: "<red>Amount is below minimum transaction amount</red>"
+      above_max: "<red>Amount exceeds maximum transaction amount</red>"
+      same_account: "<red>Cannot transfer between same accounts</red>"
+      non_found: "<red>One or both accounts not found</red>"
+      not_a_source_owner: "<red>You don't own the source account</red>"
+      not_enough: "<red>You don't have enough money to transfer (Requested: $amount, Fee: $fee)</red>"
+      failed_to_transfer: "<red>Transfer failed</red>"
