@@ -4,6 +4,7 @@ import net.yellowstrawberry.ecomonic.api.account.Account;
 import net.yellowstrawberry.ecomonic.api.account.CachedAccount;
 import net.yellowstrawberry.ecomonic.api.logging.Actions;
 import net.yellowstrawberry.ecomonic.api.data.DataSource;
+import net.yellowstrawberry.ecomonic.data.utils.DatabaseUtils;
 import net.yellowstrawberry.ecomonic.data.utils.SQLUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +21,7 @@ public class SQLiteDataSource implements DataSource {
 
     @Override
     public void connect(String host, Map<String, String> details) throws Exception {
-        Class.forName("org.sqlite.JDBC");
+        Class.forName("org.sqlite.JDBC", true, DatabaseUtils.DATABASE_CLASS_LOADER);
         sql = new SQLUtils("jdbc:sqlite:"+host);
         sql.execute("""
         CREATE TABLE IF NOT EXISTS accounts (

@@ -12,25 +12,28 @@ import net.yellowstrawberry.ecomonic.api.listener.AccountListener;
 import net.yellowstrawberry.ecomonic.api.listener.EcomonicListener;
 import net.yellowstrawberry.ecomonic.command.CommandRegistrar;
 import net.yellowstrawberry.ecomonic.config.Configurations;
+import net.yellowstrawberry.ecomonic.data.DatabaseType;
 import net.yellowstrawberry.ecomonic.data.sqlite.SQLiteDataSource;
+import net.yellowstrawberry.ecomonic.data.utils.DatabaseUtils;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class EcomonicPlugin extends JavaPlugin implements Ecomonic, Listener {
 
     public static EcomonicPlugin plugin;
-    private static DataSource source = new SQLiteDataSource();
+    private final long loadedTime = System.currentTimeMillis();
+
+    private static DataSource source;
     private HashMap<UUID, Account> primaryAccounts = new HashMap<>();
     private Long2ObjectMap<Account> cachedAccounts = new Long2ObjectOpenHashMap<>();
-
-    private long loadedTime;
-
     /**
      * Plugin
      * */
@@ -41,28 +44,53 @@ public class EcomonicPlugin extends JavaPlugin implements Ecomonic, Listener {
         plugin = this;
 
         Configurations.load();
-
-        try {
-            source.connect(Configurations.database.toString(), null);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        setupDatabase();
 
         getServer().getPluginManager().registerEvents(this, this);
 
-        loadedTime = System.currentTimeMillis();
         new CommandRegistrar(this.getLifecycleManager());
         getLogger().info("Ecomonic Plugin has been enabled!");
     }
 
-    @Override
-    public void onDisable() {
+    public void setupDatabase() {
         try {
-            source.close();
+            DatabaseUtils.downloadLibrary(Configurations.datasourceType);
+            DatabaseUtils.loadLibrary(Configurations.datasourceType);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        source = switch (Configurations.datasourceType) {
+            case SQLITE -> new SQLiteDataSource();
+            default -> throw new UnsupportedOperationException("Unsupported value: " + Configurations.datasourceType);
+        };
+
+        try {
+            source.connect(
+                    Configurations.datasourceHost,
+                    Map.of(
+                            "username", Configurations.datasourceUsername,
+                            "password", Configurations.datasourcePassword,
+                            "database", Configurations.datasourceDatabase,
+                            "port", Configurations.datasourcePort
+                    )
+            );
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void onDisable() {
         plugin = null;
+        if(source!=null) {
+            try {
+                source.close();
+                DatabaseUtils.unloadLibrary();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
         getLogger().info("Ecomonic Plugin has been disabled!");
     }
 
