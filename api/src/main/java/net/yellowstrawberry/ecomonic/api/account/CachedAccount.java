@@ -12,6 +12,7 @@ import java.util.UUID;
  * @since 0.0.1
  * @version 0.0.1
  */
+@Deprecated
 public class CachedAccount implements Account {
 
     private final long id;

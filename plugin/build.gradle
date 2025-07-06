@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id "xyz.jpenilla.run-paper" version "2.3.1"
 }
 
 group = 'net.yellowstrawberry'
@@ -17,7 +18,7 @@ repositories {
 
 dependencies {
     compileOnly 'io.papermc.paper:paper-api:1.21.5-R0.1-SNAPSHOT'
-    implementation "net.yellowstrawberry:ecomonic-api:${rootProject.version}"
+    implementation "net.yellowstrawberry:ecomonic-api:${version}"
     implementation 'io.hypersistence:hypersistence-tsid:2.1.4'
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -40,4 +41,18 @@ processResources {
     filesMatching('plugin.yml') {
         expand props
     }
+}
+
+tasks {
+    runServer {
+        minecraftVersion("1.21.5")
+    }
+}
+
+tasks.withType(xyz.jpenilla.runtask.task.AbstractRun).configureEach {
+    javaLauncher = javaToolchains.launcherFor {
+        it.vendor = JvmVendorSpec.JETBRAINS
+        it.languageVersion = JavaLanguageVersion.of(21)
+    }
+    jvmArgs = ["-XX:+AllowEnhancedClassRedefinition"]
 }

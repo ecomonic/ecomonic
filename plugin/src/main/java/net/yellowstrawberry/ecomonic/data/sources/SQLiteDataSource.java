@@ -1,16 +1,17 @@
-package net.yellowstrawberry.ecomonic.data.sqlite;
+package net.yellowstrawberry.ecomonic.data.sources;
 
 import net.yellowstrawberry.ecomonic.api.account.Account;
 import net.yellowstrawberry.ecomonic.api.account.CachedAccount;
 import net.yellowstrawberry.ecomonic.api.logging.Actions;
 import net.yellowstrawberry.ecomonic.api.data.DataSource;
-import net.yellowstrawberry.ecomonic.data.utils.DatabaseUtils;
+import net.yellowstrawberry.ecomonic.config.Configurations;
 import net.yellowstrawberry.ecomonic.data.utils.SQLUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -20,15 +21,15 @@ public class SQLiteDataSource implements DataSource {
     private SQLUtils sql;
 
     @Override
-    public void connect(String host, Map<String, String> details) throws Exception {
-        Class.forName("org.sqlite.JDBC", true, DatabaseUtils.DATABASE_CLASS_LOADER);
-        sql = new SQLUtils("jdbc:sqlite:"+host);
-        sql.execute("""
+    public void connect(String host, Map<String, String> details) {
+        sql = new SQLUtils("jdbc:sqlite:"+ Path.of(Configurations.root.toURI()).resolve(host));
+        System.out.println("jdbc:sqlite:"+Path.of(Configurations.root.toURI()).resolve(host));
+        sql.executeUpdate("""
         CREATE TABLE IF NOT EXISTS accounts (
             id INTEGER NOT NULL PRIMARY KEY,
             owner BLOB,
             balance REAL DEFAULT 0.0,
-            FOREIGN KEY (owner) REFERENCES players(uuid)
+            FOREIGN KEY (owner) REFERENCES players(id)
         );
         CREATE TABLE IF NOT EXISTS players (
             id BLOB NOT NULL PRIMARY KEY,
@@ -53,9 +54,7 @@ public class SQLiteDataSource implements DataSource {
             if (!set.next()) return null;
             UUID uuid = asUuid(set.getBytes("owner"));
 
-            return clazz.isAssignableFrom(CachedAccount.class) ?
-                    clazz.getConstructor(long.class, UUID.class, double.class).newInstance(id, uuid, set.getDouble("balance"))
-                    : clazz.getConstructor(long.class, UUID.class).newInstance(id, uuid);
+            return clazz.getConstructor(long.class, UUID.class).newInstance(id, uuid);
         } catch (SQLException | NoSuchMethodException | InvocationTargetException | InstantiationException |
                  IllegalAccessException e) {
             throw new RuntimeException(e);
@@ -65,6 +64,7 @@ public class SQLiteDataSource implements DataSource {
     @Override
     public Account getPrimaryAccount(UUID uuid, Class<? extends Account> clazz) {
         try (ResultSet set = sql.executeQuery("SELECT * FROM players WHERE id = ? LIMIT 1;", asStream(uuid))){
+            if (!set.next()) return null;
             return getAccount(set.getLong("primary_account"), clazz);
         } catch (SQLException e) {
             throw new RuntimeException(e);

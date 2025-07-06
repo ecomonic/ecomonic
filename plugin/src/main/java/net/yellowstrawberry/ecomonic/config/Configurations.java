@@ -13,9 +13,8 @@ import java.util.Map;
 
 public class Configurations {
     public static final File root = EcomonicPlugin.plugin.getDataFolder();
-    public static boolean cache = true;
     public static DatabaseType datasourceType = DatabaseType.SQLITE;
-    public static String datasourceHost = root+"./ecomonic.db";
+    public static String datasourceHost = "./ecomonic.db";
     public static String datasourceDatabase = "ecomonic";
     public static String datasourceUsername = "ecomonic";
     public static String datasourcePassword = "Ch@ngeTh!s3cr3t";
@@ -84,11 +83,7 @@ public class Configurations {
         if (datasource.containsKey("database")) datasourceDatabase = (String) datasource.get("database");
         if (datasource.containsKey("username")) datasourceUsername = (String) datasource.get("username");
         if (datasource.containsKey("password")) datasourcePassword = (String) datasource.get("password");
-        if (datasource.containsKey("port")) datasourcePort = (String) datasource.get("port");
-        if (datasource.containsKey("cache")) {
-            String cacheVal = ((String) datasource.get("cache")).toLowerCase();
-            cache = cacheVal.equals("yes");
-        }
+        if (datasource.containsKey("port")) datasourcePort = String.valueOf(datasource.get("port"));
 
         if (datasourceType == DatabaseType.SQLITE) setupSqliteDatabase();
     }

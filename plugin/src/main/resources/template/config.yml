@@ -53,14 +53,8 @@ datasource:
   # Path to the SQLite database file or host for other databases
   host: "./ecomonic.db"
 
-  # Cache settings for the database
-  # There are two options for cache:
-  # - yes: Prioritize cached data
-  # - no: Prioritize database data
-  cache: "yes"
-
   # Uncomment the following lines to configure a MySQL, MariaDB, or PostgreSQL database connection
   #port: 3306 # Port number for the database connection
   #database: "ecomonic" # Name of the database to connect to (only for MySQL, MariaDB, PostgreSQL)
   #username: "ecomonic" # Username for the database connection (only for MySQL, MariaDB, PostgreSQL)
-  #password: "Ch@ngeTh!s3cr3t" # Password for the database connection (only for MySQL, MariaDB, PostgreSQL)
+  #password: "Ch@ngeT" # Password for the database connection (only for MySQL, MariaDB, PostgreSQL)
