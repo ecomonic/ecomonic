@@ -1,11 +1,8 @@
 package net.yellowstrawberry.ecomonic;
 
 import io.hypersistence.tsid.TSID;
-import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.yellowstrawberry.ecomonic.api.Ecomonic;
 import net.yellowstrawberry.ecomonic.api.account.Account;
-import net.yellowstrawberry.ecomonic.api.account.CachedAccount;
 import net.yellowstrawberry.ecomonic.api.account.SyncedAccount;
 import net.yellowstrawberry.ecomonic.api.data.DataSource;
 import net.yellowstrawberry.ecomonic.api.listener.AccountListener;
@@ -15,16 +12,17 @@ import net.yellowstrawberry.ecomonic.config.Configurations;
 import net.yellowstrawberry.ecomonic.data.sources.PostgresDataSource;
 import net.yellowstrawberry.ecomonic.data.sources.SQLiteDataSource;
 import net.yellowstrawberry.ecomonic.data.utils.DatabaseUtils;
+import net.yellowstrawberry.ecomonic.translation.Translator;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 
 public class EcomonicPlugin extends JavaPlugin implements Ecomonic, Listener {
 
@@ -43,6 +41,7 @@ public class EcomonicPlugin extends JavaPlugin implements Ecomonic, Listener {
 
         Configurations.load();
         setupDatabase();
+        setupTranslator();
 
         getServer().getPluginManager().registerEvents(this, this);
 
@@ -79,6 +78,22 @@ public class EcomonicPlugin extends JavaPlugin implements Ecomonic, Listener {
         }
     }
 
+    public void setupTranslator() {
+        File troot = new File(Configurations.root+"/lang/");
+        if(!troot.exists()) {
+            if(!troot.mkdirs()) throw new RuntimeException("Failed to create lang folder");
+            for(String s : new String[]{"en_US"}) {
+                try {
+                    Files.copy(Objects.requireNonNull(EcomonicPlugin.class.getResourceAsStream("/template/lang/%s.yml".formatted(s))), Path.of(troot + "/%s.yml".formatted(s)));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+        Arrays.stream(Objects.requireNonNull(troot.listFiles(f -> f.getName().endsWith(".yml")))).forEach(Translator::loadTranslation);
+    }
+
     @Override
     public void onDisable() {
         plugin = null;
@@ -109,16 +124,12 @@ public class EcomonicPlugin extends JavaPlugin implements Ecomonic, Listener {
 
     @Override
     public Account getAccount(long id) {
-        Account a = source.getAccount(id, SyncedAccount.class);
-        if (a == null) return null;
-        return a;
+        return source.getAccount(id, SyncedAccount.class);
     }
 
     @Override
     public Account getPrimaryAccount(UUID uuid) {
-        Account a = source.getPrimaryAccount(uuid, SyncedAccount.class);
-        if (a == null) return null;
-        return a;
+        return source.getPrimaryAccount(uuid, SyncedAccount.class);
     }
 
     @Override

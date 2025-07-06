@@ -33,6 +33,8 @@ public class Configurations {
     public static double minTransactionAmount = 0.0;
     public static int transactionCooldown = 0;
 
+    public static String defaultLanguage = "en_US";
+
     public static void load() {
         if (!root.exists()) root.mkdirs();
         File configFile = new File(root, "config.yml");
@@ -46,6 +48,7 @@ public class Configurations {
             loadDatasourceConfig(config);
             loadAccountConfig(config);
             loadTransactionConfig(config);
+            loadTranslationConfig(config);
             
         } catch (Exception e) {
             EcomonicPlugin.plugin.getLogger().severe("Failed to load config.yml: " + e.getMessage());
@@ -120,5 +123,12 @@ public class Configurations {
         if (transaction.containsKey("max_transaction_amount")) maxTransactionAmount = Double.parseDouble(transaction.get("max_transaction_amount").toString());
         if (transaction.containsKey("min_transaction_amount")) minTransactionAmount = Double.parseDouble(transaction.get("min_transaction_amount").toString());
         if (transaction.containsKey("transaction_cooldown")) transactionCooldown = Integer.parseInt(transaction.get("transaction_cooldown").toString());
+    }
+
+    private static void loadTranslationConfig(Map<String, Object> config) {
+        if (!config.containsKey("translation")) return;
+
+        Map<String, Object> translation = (Map<String, Object>) config.get("translation");
+        if (translation.containsKey("translation")) defaultLanguage = (String) translation.get("default");
     }
 }

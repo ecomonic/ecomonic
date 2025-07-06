@@ -86,13 +86,7 @@ public class PostgresDataSource implements DataSource {
 
     @Override
     public void setPrimaryAccount(UUID uuid, long l) {
-        sql.execute("INSERT OR IGNORE INTO ecomonic.players (id, primary_account) VALUES (?, ?);", uuid, l);
-        sql.execute("UPDATE players SET primary_account = ? WHERE id = ?;", l, uuid);
-        try {
-            sql.getConnection().commit();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        sql.execute("INSERT INTO ecomonic.players (id, primary_account) VALUES (?, ?) ON CONFLICT (id) DO UPDATE SET primary_account = ?;", uuid, l, l);
     }
 
     @Override

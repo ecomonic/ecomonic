@@ -11,6 +11,7 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.TextColor;
 import net.yellowstrawberry.ecomonic.api.Ecomonic;
 import net.yellowstrawberry.ecomonic.api.account.Account;
+import net.yellowstrawberry.ecomonic.translation.Translator;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -24,14 +25,14 @@ public class MoneyCommand implements CommandRoot{
                     if (context.getSource().getExecutor() instanceof Player p) {
                         Account a = Ecomonic.INSTANCE.getPrimaryAccount(p.getUniqueId());
                         if(a == null) {
-                            p.sendMessage(Component.text("You do not have an account!", TextColor.color(0xFF0000)));
+                            Translator.send(context, "ecomonic.account.error.no_account");
                             return 0;
                         }
                         double balance = a.getBalance();
                         p.sendMessage("Your balance is " + balance);
                         return 1;
                     }else {
-                        context.getSource().getSender().sendMessage(Component.text("You are not a player!", TextColor.color(0xFF0000)));
+                        Translator.send(context, "ecomonic.general.error.not_a_player");
                         return 0;
                     }
                 });
@@ -74,7 +75,7 @@ public class MoneyCommand implements CommandRoot{
                                     if(to.isOnline()) to.sendMessage(Component.text("You have received " + amount + " from " + p.getName() + ".", TextColor.color(0x00FF00)));
                                     return 1;
                                 }else {
-                                    context.getSource().getSender().sendMessage(Component.text("You're not a player", TextColor.color(0xFF0000)));
+                                    Translator.send(context, "ecomonic.general.error.not_a_player");
                                     return 0;
                                 }
                             })
@@ -104,7 +105,7 @@ public class MoneyCommand implements CommandRoot{
                                 p.sendMessage(Component.text("Sent request to " + to.getName() + ".").color(TextColor.color(0x00FF00)));
                                 return 1;
                             }else {
-                                context.getSource().getSender().sendMessage(Component.text("You're not a player", TextColor.color(0xFF0000)));
+                                Translator.send(context, "ecomonic.general.error.not_a_player");
                                 return 0;
                             }
                         })

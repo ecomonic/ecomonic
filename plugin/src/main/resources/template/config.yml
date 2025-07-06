@@ -58,3 +58,6 @@ datasource:
   #database: "ecomonic" # Name of the database to connect to (only for MySQL, MariaDB, PostgreSQL)
   #username: "ecomonic" # Username for the database connection (only for MySQL, MariaDB, PostgreSQL)
   #password: "Ch@ngeT" # Password for the database connection (only for MySQL, MariaDB, PostgreSQL)
+
+language:
+  default: 'en_US' # Uncovered locale will automatically lead to en_US

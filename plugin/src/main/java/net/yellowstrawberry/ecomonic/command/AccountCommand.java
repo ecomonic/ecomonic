@@ -8,13 +8,17 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.TextColor;
 import net.yellowstrawberry.ecomonic.api.Ecomonic;
 import net.yellowstrawberry.ecomonic.api.account.Account;
 import net.yellowstrawberry.ecomonic.config.Configurations;
+import net.yellowstrawberry.ecomonic.translation.Translator;
 import org.bukkit.entity.Player;
 
 import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings("UnstableApiUsage")
 public class AccountCommand implements CommandRoot {
@@ -23,6 +27,7 @@ public class AccountCommand implements CommandRoot {
         return LiteralArgumentBuilder.<CommandSourceStack>literal("account")
                 .then(buildListCommand())
                 .then(buildCreateCommand())
+                .then(buildPrimaryCommand())
                 .then(buildDeleteCommand())
                 .then(buildTransferCommand())
                 .then(buildAdminCommands())
@@ -97,13 +102,13 @@ public class AccountCommand implements CommandRoot {
             Player player = context.getSource().getExecutor() instanceof Player ?
                     (Player) context.getSource().getExecutor() : null;
             if (player == null) {
-                context.getSource().getExecutor().sendMessage(Component.text("This command can only be used by players", TextColor.color(0xFF5555)));
+                Translator.send(context, "ecomonic.general.error.not_a_player");
                 return 0;
             }
 
             List<Account> existing = Ecomonic.INSTANCE.getAccounts(player.getUniqueId());
             if (existing.size() >= Configurations.maxAccounts) {
-                context.getSource().getExecutor().sendMessage(Component.text("You have reached the maximum number of accounts (" + Configurations.maxAccounts + ")", TextColor.color(0xFF5555)));
+                Translator.send(context, "ecomonic.account.error.max_accounts.self", Map.of("player", player.getName()));
                 return 0;
             }
 
@@ -112,10 +117,10 @@ public class AccountCommand implements CommandRoot {
                 Ecomonic.INSTANCE.setPrimaryAccount(player.getUniqueId(), newAccount);
             }
 
-            context.getSource().getExecutor().sendMessage(Component.text("Created new account with ID: " + newAccount.getId(), TextColor.color(0x55FF55)));
+            Translator.send(context, "ecomonic.account.created.self", Map.of("id", newAccount.getId()));
             return 1;
         } catch (Exception e) {
-            context.getSource().getExecutor().sendMessage(Component.text("Error: " + e.getMessage()).color(TextColor.color(0xFF5555)));
+            Translator.send(context, "ecomonic.general.error.unexpected_error", Map.of("msg", e.getMessage()));
             return 0;
         }
     }
@@ -123,7 +128,7 @@ public class AccountCommand implements CommandRoot {
     private int executePrimary(CommandContext<CommandSourceStack> context) {
         Player player = context.getSource().getExecutor() instanceof Player ? (Player) context.getSource().getExecutor() : null;
         if (player == null) {
-            context.getSource().getExecutor().sendMessage(Component.text("This command can only be used by players",TextColor.color(0xFF5555)));
+            Translator.send(context, "ecomonic.general.error.not_a_player");
             return 0;
         }
 
@@ -131,12 +136,12 @@ public class AccountCommand implements CommandRoot {
         Account account = Ecomonic.INSTANCE.getAccount(accountId);
 
         if (account == null) {
-            context.getSource().getExecutor().sendMessage(Component.text("Account not found", TextColor.color(0xFF5555)));
+            Translator.send(context, "ecomonic.account.error.not_found");
             return 0;
         }
 
         Ecomonic.INSTANCE.setPrimaryAccount(player.getUniqueId(), account);
-        context.getSource().getExecutor().sendMessage(Component.text("Set account " + accountId + " as primary", TextColor.color(0x55FF55)));
+        Translator.send(context, "ecomonic.account.primary", Map.of("player", player.getName(), "id", accountId));
 
         return 1;
     }
@@ -145,7 +150,7 @@ public class AccountCommand implements CommandRoot {
         try {
             Player player = context.getSource().getExecutor() instanceof Player ? (Player) context.getSource().getExecutor() : null;
             if (player == null) {
-                context.getSource().getExecutor().sendMessage(Component.text("This command can only be used by players",TextColor.color(0xFF5555)));
+                Translator.send(context, "ecomonic.general.error.not_a_player");
                 return 0;
             }
 
@@ -154,58 +159,53 @@ public class AccountCommand implements CommandRoot {
             Account account = Ecomonic.INSTANCE.getAccount(accountId);
 
             if (account == null) {
-                context.getSource().getExecutor().sendMessage(Component.text("Account not found", TextColor.color(0xFF5555)));
+                Translator.send(context, "ecomonic.account.error.not_found");
                 return 0;
             }
 
             if (!player.hasPermission("ecomonic.admin") && !player.getUniqueId().equals(account.getOwner())) {
-                context.getSource().getExecutor().sendMessage(Component.text("You don't own this account", TextColor.color(0xFF5555)));
+                Translator.send(context, "ecomonic.account.error.not_a_owner", Map.of("player", player.getName()));
                 return 0;
             }
 
             if (Ecomonic.INSTANCE.getAccounts(player.getUniqueId()).size() <= 1 &&
                     Ecomonic.INSTANCE.getPrimaryAccount(player.getUniqueId()).getId() == accountId) {
-                context.getSource().getExecutor().sendMessage(Component.text("Cannot delete your only account", TextColor.color(0xFF5555)));
+                Translator.send(context, "ecomonic.account.error.only_account", Map.of("player", player.getName()));
                 return 0;
             }
 
             if (account.getBalance() > 0) {
-                context.getSource().getExecutor().sendMessage(Component.text("Cannot delete account with non-zero balance", TextColor.color(0xFF5555)));
+                Translator.send(context, "ecomonic.account.error.non_zero", Map.of("player", player.getName()));
                 return 0;
             }
 
-            if (Ecomonic.INSTANCE.deleteAccount(accountId) != null) {
-                context.getSource().getExecutor().sendMessage(Component.text("Account " + accountId + " has been deleted").color(TextColor.color(0x55FF55)));
-                return 1;
-            } else {
-                context.getSource().getExecutor().sendMessage(Component.text("Failed to delete account", TextColor.color(0xFF5555)));
-                return 0;
+            Account newPrimary = Ecomonic.INSTANCE.getAccounts(player.getUniqueId()).getFirst();
+            if (Ecomonic.INSTANCE.getPrimaryAccount(player.getUniqueId()).getId() == accountId) {
+                Ecomonic.INSTANCE.setPrimaryAccount(player.getUniqueId(), newPrimary);
+                Translator.send(context, "ecomonic.account.deleted.self.primary", Map.of("id", accountId, "primary", newPrimary.getId()));
+            }else {
+                Translator.send(context, "ecomonic.account.deleted.self.normal", Map.of("id", accountId));
             }
+
+            return 1;
         } catch (Exception e) {
-            context.getSource().getExecutor().sendMessage(Component.text("Error: " + e.getMessage()).color(TextColor.color(0xFF5555)));
+            Translator.send(context, "ecomonic.general.error.unexpected_error", Map.of("msg", e.getMessage()));
             return 0;
         }
     }
 
     private int executeList(CommandContext<CommandSourceStack> context) {
         try {
-            Player player = context.getSource().getExecutor() instanceof Player ?
-                    (Player) context.getSource().getExecutor() : null;
+            Player player = context.getSource().getExecutor() instanceof Player ? (Player) context.getSource().getExecutor() : null;
             if (player == null) {
-                context.getSource().getExecutor().sendMessage(
-                    Component.text("This command can only be used by players")
-                        .color(TextColor.color(0xFF5555))
-                );
+                Translator.send(context, "ecomonic.general.error.not_a_player");
                 return 0;
             }
 
             List<Account> accounts = Ecomonic.INSTANCE.getAccounts(player.getUniqueId());
             
             if (accounts.isEmpty()) {
-                context.getSource().getExecutor().sendMessage(
-                    Component.text("You don't have any accounts")
-                        .color(TextColor.color(0xFF5555))
-                );
+                Translator.send(context, "ecomonic.account.error.no_accounts");
                 return 0;
             }
 
@@ -213,11 +213,20 @@ public class AccountCommand implements CommandRoot {
             Account primaryAccount = Ecomonic.INSTANCE.getPrimaryAccount(player.getUniqueId());
             for (Account account : accounts) {
                 boolean isPrimary = primaryAccount != null && primaryAccount.getId() == account.getId();
-                context.getSource().getExecutor().sendMessage(Component.text(String.format("ID: %d, Balance: %.2f%s", account.getId(), account.getBalance(),isPrimary ? " (Primary)" : ""), TextColor.color(0x55FF55)));
+                context.getSource().getExecutor().sendMessage(
+                        Component.textOfChildren(
+                                Component.text("ID: "),
+                                Component.text(account.getId())
+                                        .hoverEvent(HoverEvent.showText(Component.text("Click to copy")))
+                                        .clickEvent(ClickEvent.clickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, String.valueOf(account.getId()))),
+                                Component.text(", "),
+                                Component.text("Balance: %.2f%s".formatted(account.getBalance(), isPrimary ? " (Primary)" : ""))
+                        ).color(TextColor.color(0x55FF55))
+                );
             }
             return 1;
         } catch (Exception e) {
-            context.getSource().getExecutor().sendMessage(Component.text("Error: " + e.getMessage(), TextColor.color(0xFF5555)));
+            Translator.send(context, "ecomonic.general.error.unexpected_error", Map.of("msg", e.getMessage()));
             return 0;
         }
     }
@@ -227,10 +236,7 @@ public class AccountCommand implements CommandRoot {
             Player player = context.getSource().getExecutor() instanceof Player ?
                     (Player) context.getSource().getExecutor() : null;
             if (player == null) {
-                context.getSource().getExecutor().sendMessage(
-                    Component.text("This command can only be used by players")
-                        .color(TextColor.color(0xFF5555))
-                );
+                Translator.send(context, "ecomonic.general.error.not_a_player");
                 return 0;
             }
 
@@ -239,18 +245,12 @@ public class AccountCommand implements CommandRoot {
             double amount = DoubleArgumentType.getDouble(context, "amount");
 
             if (amount < Configurations.minTransactionAmount) {
-                context.getSource().getExecutor().sendMessage(
-                    Component.text("Amount is below minimum transaction amount")
-                        .color(TextColor.color(0xFF5555))
-                );
+                Translator.send(context, "ecomonic.account.error.below_min", Map.of("min", Configurations.minTransactionAmount));
                 return 0;
             }
 
             if (amount > Configurations.maxTransactionAmount) {
-                context.getSource().getExecutor().sendMessage(
-                    Component.text("Amount exceeds maximum transaction amount")
-                        .color(TextColor.color(0xFF5555))
-                );
+                Translator.send(context, "ecomonic.account.error.above_max", Map.of("max", Configurations.maxTransactionAmount));
                 return 0;
             }
 
@@ -258,53 +258,46 @@ public class AccountCommand implements CommandRoot {
             Account toAccount = Ecomonic.INSTANCE.getAccount(toId);
 
             if (fromAccount == null || toAccount == null) {
-                context.getSource().getExecutor().sendMessage(
-                    Component.text("One or both accounts not found")
-                        .color(TextColor.color(0xFF5555))
-                );
+                Translator.send(context, "ecomonic.account.error.non_found");
+                return 0;
+            }
+
+            if (fromAccount.getId() == toAccount.getId()) {
+                Translator.send(context, "ecomonic.account.error.same_account");
                 return 0;
             }
 
             if (!player.getUniqueId().equals(fromAccount.getOwner())) {
-                context.getSource().getExecutor().sendMessage(
-                    Component.text("You don't own the source account")
-                        .color(TextColor.color(0xFF5555))
-                );
+                Translator.send(context, "ecomonic.account.error.not_a_source_owner");
                 return 0;
             }
 
             double totalAmount = amount;
+            double fee = 0;
             if (Configurations.enableTransactionFees) {
-                totalAmount += amount * (Configurations.transactionFeePercentage / 100.0);
+                fee = Math.round(amount * (Configurations.transactionFeePercentage / 100.0) * 100.0) / 100.0;
+                totalAmount += fee;
             }
 
             if (!fromAccount.has(totalAmount)) {
-                context.getSource().getExecutor().sendMessage(
-                    Component.text("Insufficient funds")
-                        .color(TextColor.color(0xFF5555))
-                );
+                Translator.send(context, "ecomonic.account.error.not_enough", Map.of("amount", amount, "fee", "%.2f".formatted(fee)));
                 return 0;
             }
 
             if (fromAccount.withdraw(totalAmount) && toAccount.deposit(amount)) {
-                context.getSource().getExecutor().sendMessage(
-                    Component.text(String.format("Successfully transferred %.2f from account %d to %d",
-                        amount, fromId, toId))
-                        .color(TextColor.color(0x55FF55))
-                );
+                Translator.send(context, "ecomonic.account.transfer", Map.of(
+                        "amount", amount,
+                        "from", fromId,
+                        "to", toId,
+                        "fee", fee
+                ));
                 return 1;
             } else {
-                context.getSource().getExecutor().sendMessage(
-                    Component.text("Transfer failed")
-                        .color(TextColor.color(0xFF5555))
-                );
+                Translator.send(context, "ecomonic.account.error.failed_to_transfer");
                 return 0;
             }
         } catch (Exception e) {
-            context.getSource().getExecutor().sendMessage(
-                Component.text("Error: " + e.getMessage())
-                    .color(TextColor.color(0xFF5555))
-            );
+            Translator.send(context, "ecomonic.general.error.unexpected_error", Map.of("msg", e.getMessage()));
             return 0;
         }
     }
@@ -312,10 +305,7 @@ public class AccountCommand implements CommandRoot {
     private int executeCreate(CommandContext<CommandSourceStack> context) {
         try {
             if (!context.getSource().getExecutor().hasPermission("ecomonic.admin")) {
-                context.getSource().getExecutor().sendMessage(
-                    Component.text("You don't have permission to use this command")
-                        .color(TextColor.color(0xFF5555))
-                );
+                Translator.send(context, "ecomonic.general.error.permission");
                 return 0;
             }
             
@@ -323,10 +313,7 @@ public class AccountCommand implements CommandRoot {
             List<Account> existing = Ecomonic.INSTANCE.getAccounts(target.getUniqueId());
 
             if (existing.size() >= Configurations.maxAccounts) {
-                context.getSource().getExecutor().sendMessage(
-                    Component.text("Player has reached maximum number of accounts")
-                        .color(TextColor.color(0xFF5555))
-                );
+                Translator.send(context, "ecomonic.account.error.max_accounts.admin", Map.of("player", target.getName()));
                 return 0;
             }
 
@@ -335,17 +322,10 @@ public class AccountCommand implements CommandRoot {
                 Ecomonic.INSTANCE.setPrimaryAccount(target.getUniqueId(), newAccount);
             }
 
-            context.getSource().getExecutor().sendMessage(
-                Component.text(String.format("Created account with ID %d for %s",
-                    newAccount.getId(), target.getName()))
-                    .color(TextColor.color(0x55FF55))
-            );
+            Translator.send(context, "ecomonic.account.created.admin", Map.of("id", newAccount.getId(), "target", target.getName()));
             return 1;
         } catch (Exception e) {
-            context.getSource().getExecutor().sendMessage(
-                Component.text("Error: " + e.getMessage())
-                    .color(TextColor.color(0xFF5555))
-            );
+            Translator.send(context, "ecomonic.general.error.unexpected_error", Map.of("msg", e.getMessage()));
             return 0;
         }
     }
@@ -353,7 +333,7 @@ public class AccountCommand implements CommandRoot {
     private int executeSet(CommandContext<CommandSourceStack> context) {
         try {
             if (!context.getSource().getExecutor().hasPermission("ecomonic.admin")) {
-                context.getSource().getExecutor().sendMessage(Component.text("You don't have permission to use this command", TextColor.color(0xFF5555)));
+                Translator.send(context, "ecomonic.general.error.permission");
                 return 0;
             }
 
@@ -362,27 +342,27 @@ public class AccountCommand implements CommandRoot {
 
             Account account = Ecomonic.INSTANCE.getAccount(accountId);
             if (account == null) {
-                context.getSource().getExecutor().sendMessage(Component.text("Account not found", TextColor.color(0xFF5555)));
+                Translator.send(context, "ecomonic.account.error.not_found");
                 return 0;
             }
 
             if (account.set(amount)) {
-                context.getSource().getExecutor().sendMessage(Component.text(String.format("Set balance of account %d to %.2f", accountId, amount), TextColor.color(0x55FF55)));
+                Translator.send(context, "ecomonic.account.set", Map.of("id", accountId, "amount", amount));
                 return 1;
             } else {
-                context.getSource().getExecutor().sendMessage(Component.text("Failed to set account balance", TextColor.color(0xFF5555)));
+                Translator.send(context, "ecomonic.account.error.failed_to_set");
                 return 0;
             }
         } catch (Exception e) {
-            context.getSource().getExecutor().sendMessage(Component.text("Error: " + e.getMessage()).color(TextColor.color(0xFF5555)));
+            Translator.send(context, "ecomonic.general.error.unexpected_error", Map.of("msg", e.getMessage()));
             return 0;
         }
     }
 
     private int executeDelete(CommandContext<CommandSourceStack> context) {
         try {
-            if (!context.getSource().getExecutor().hasPermission("ecomonic.admin")) {
-                context.getSource().getExecutor().sendMessage(Component.text("You don't have permission to use this command", TextColor.color(0xFF5555)));
+            if (!context.getSource().getSender().hasPermission("ecomonic.admin")) {
+                Translator.send(context, "ecomonic.general.error.permission");
                 return 0;
             }
 
@@ -390,19 +370,14 @@ public class AccountCommand implements CommandRoot {
             Account account = Ecomonic.INSTANCE.getAccount(accountId);
 
             if (account == null) {
-                context.getSource().getExecutor().sendMessage(Component.text("Account not found", TextColor.color(0xFF5555)));
+                Translator.send(context, "ecomonic.account.error.not_found");
                 return 0;
             }
 
-            if (Ecomonic.INSTANCE.deleteAccount(accountId) != null) {
-                context.getSource().getExecutor().sendMessage(Component.text("Account " + accountId + " has been deleted").color(TextColor.color(0x55FF55)));
-                return 1;
-            } else {
-                context.getSource().getExecutor().sendMessage(Component.text("Failed to delete account", TextColor.color(0xFF5555)));
-                return 0;
-            }
+            Translator.send(context, "ecomonic.account.deleted.admin", Map.of("id", accountId));
+            return 1;
         } catch (Exception e) {
-            context.getSource().getExecutor().sendMessage(Component.text("Error: " + e.getMessage()).color(TextColor.color(0xFF5555)));
+            Translator.send(context, "ecomonic.general.error.unexpected_error", Map.of("msg", e.getMessage()));
             return 0;
         }
     }
