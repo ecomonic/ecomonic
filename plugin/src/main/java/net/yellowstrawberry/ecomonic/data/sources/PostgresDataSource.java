@@ -114,7 +114,6 @@ public class PostgresDataSource implements DataSource {
     public @NotNull Account createAccount(long id, UUID uuid, Class<? extends Account> clazz) {
         sql.executeUpdate("INSERT INTO ecomonic.players (id, primary_account) VALUES (?, NULL) ON CONFLICT DO NOTHING;", uuid);
         sql.executeUpdate("INSERT INTO ecomonic.accounts (id, owner, balance) VALUES (?, ?, 0);", id, uuid);
-        sql.executeUpdate("UPDATE ecomonic.players SET primary_account = ? WHERE id = ?;", id, uuid);
         return Objects.requireNonNull(getAccount(id, clazz));
     }
 
