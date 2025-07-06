@@ -32,8 +32,6 @@ public class EcomonicPlugin extends JavaPlugin implements Ecomonic, Listener {
     private final long loadedTime = System.currentTimeMillis();
 
     private static DataSource source;
-    private HashMap<UUID, Account> primaryAccounts = new HashMap<>();
-    private Long2ObjectMap<Account> cachedAccounts = new Long2ObjectOpenHashMap<>();
     /**
      * Plugin
      * */
@@ -111,31 +109,21 @@ public class EcomonicPlugin extends JavaPlugin implements Ecomonic, Listener {
 
     @Override
     public Account getAccount(long id) {
-        if(cachedAccounts == null) return source.getAccount(id, SyncedAccount.class);
-        if(cachedAccounts.containsKey(id)) return cachedAccounts.get(id);
-        Account a = source.getAccount(id, CachedAccount.class);
+        Account a = source.getAccount(id, SyncedAccount.class);
         if (a == null) return null;
-        cachedAccounts.put(id, a);
         return a;
     }
 
     @Override
     public Account getPrimaryAccount(UUID uuid) {
-        if (primaryAccounts == null) return source.getPrimaryAccount(uuid, SyncedAccount.class);
-        if (primaryAccounts.containsKey(uuid)) return primaryAccounts.get(uuid);
-
-        Account a = source.getPrimaryAccount(uuid, CachedAccount.class);
+        Account a = source.getPrimaryAccount(uuid, SyncedAccount.class);
         if (a == null) return null;
-        primaryAccounts.put(uuid, a);
         return a;
     }
 
     @Override
     public void setPrimaryAccount(UUID uuid, Account account) {
         source.setPrimaryAccount(uuid, account.getId());
-        if (primaryAccounts == null) return;
-
-        primaryAccounts.put(uuid, account);
     }
 
     @Override
@@ -148,58 +136,42 @@ public class EcomonicPlugin extends JavaPlugin implements Ecomonic, Listener {
     @Override
     public Account createAccount(UUID uuid) {
         long id = TSID.fast().toLong();
-        return source.createAccount(id, uuid, cachedAccounts!= null ? CachedAccount.class : SyncedAccount.class);
+        return source.createAccount(id, uuid, SyncedAccount.class);
     }
 
     @Override
     public Account deleteAccount(long l) {
         source.deleteAccount(l);
-        if (cachedAccounts != null && cachedAccounts.containsKey(l)) return cachedAccounts.remove(l);
         return null;
     }
 
     @Override
     public boolean withdraw(long l, double v) {
-        if (cachedAccounts != null && cachedAccounts.containsKey(l)) {
-            CachedAccount account = (CachedAccount) cachedAccounts.get(l);
-            return account.withdraw(v);
-        }else if (source.getAccount(l, SyncedAccount.class) != null) return source.withdraw(l, v);
+        if (source.getAccount(l, SyncedAccount.class) != null) return source.withdraw(l, v);
         return false;
     }
 
     @Override
     public boolean deposit(long l, double v) {
-        if (cachedAccounts != null && cachedAccounts.containsKey(l)) {
-            CachedAccount account = (CachedAccount) cachedAccounts.get(l);
-            return account.deposit(v);
-        }else if (source.getAccount(l, SyncedAccount.class) != null) return source.deposit(l, v);
+        if (source.getAccount(l, SyncedAccount.class) != null) return source.deposit(l, v);
         return false;
     }
 
     @Override
     public boolean set(long l, double v) {
-        if (cachedAccounts != null && cachedAccounts.containsKey(l)) {
-            CachedAccount account = (CachedAccount) cachedAccounts.get(l);
-            return account.set(v);
-        } else if (source.getAccount(l, SyncedAccount.class) != null) return source.set(l, v);
+        if (source.getAccount(l, SyncedAccount.class) != null) return source.set(l, v);
         return false;
     }
 
     @Override
     public boolean has(long l, double v) {
-        if (cachedAccounts != null && cachedAccounts.containsKey(l)) {
-            CachedAccount account = (CachedAccount) cachedAccounts.get(l);
-            return account.has(v);
-        } else if (source.getAccount(l, SyncedAccount.class) != null) return source.has(l, v);
+        if (source.getAccount(l, SyncedAccount.class) != null) return source.has(l, v);
         return false;
     }
 
     @Override
     public double getBalance(long id) {
-        if (cachedAccounts != null && cachedAccounts.containsKey(id)) {
-            CachedAccount account = (CachedAccount) cachedAccounts.get(id);
-            return account.getBalance();
-        } else if (source.getAccount(id, SyncedAccount.class) != null) return source.getBalance(id);
+        if (source.getAccount(id, SyncedAccount.class) != null) return source.getBalance(id);
         throw new IllegalArgumentException("Account not found!");
     }
 

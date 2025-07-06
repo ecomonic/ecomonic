@@ -1,19 +1,25 @@
 package net.yellowstrawberry.ecomonic.data;
 
 public enum DatabaseType {
-    SQLITE("sqlite"),
-    MYSQL("mysql"),
-    MARIADB("mariadb"),
-    POSTGRESQL("postgresql");
+    SQLITE("sqlite", "org.sqlite.JDBC"),
+    MYSQL("mysql", ""),
+    MARIADB("mariadb", ""),
+    POSTGRESQL("postgresql", "org.postgresql.Driver");
 
     private final String name;
+    private final String driver;
 
-    DatabaseType(String name) {
+    DatabaseType(String name, String driver) {
         this.name = name;
+        this.driver = driver;
     }
 
     public String getName() {
         return name;
+    }
+
+    public String getDriver() {
+        return driver;
     }
 
     public static DatabaseType fromName(String name) {
