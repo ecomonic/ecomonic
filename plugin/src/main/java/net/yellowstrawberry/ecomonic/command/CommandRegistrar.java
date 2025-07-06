@@ -2,16 +2,21 @@ package net.yellowstrawberry.ecomonic.command;
 
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.LongArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
+import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver;
 import io.papermc.paper.plugin.lifecycle.event.LifecycleEventManager;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import net.kyori.adventure.text.Component;
 import net.yellowstrawberry.ecomonic.api.Ecomonic;
 import net.yellowstrawberry.ecomonic.api.account.Account;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
@@ -50,26 +55,27 @@ public class CommandRegistrar {
     }
 
     private void registerUserCommands(LiteralArgumentBuilder<CommandSourceStack> root) {
-        root.then(Commands.literal("give")
-            .requires(sender -> sender.getExecutor() != null && sender.getExecutor().hasPermission("ecomonic.user.general"))
-            .then(
-                Commands.argument("player", ArgumentTypes.player()).then(
-                    Commands.argument("amount", DoubleArgumentType.doubleArg(0)).executes(context -> {
-                        if (context.getSource().getExecutor() instanceof Player p) {
-                            double amount = DoubleArgumentType.getDouble(context, "amount");
-                            if(Ecomonic.INSTANCE.deposit(Ecomonic.INSTANCE.getPrimaryAccount(p.getUniqueId()).getId(), amount)) {
-                                p.sendMessage("You have given " + amount + " money to " + context.getArgument("player", Player.class).getName() + ".");
+        root.then(
+            Commands.literal("give")
+                .requires(sender -> sender.getExecutor() != null && sender.getExecutor().hasPermission("ecomonic.user.general"))
+                .then(
+                    player().then(
+                        Commands.argument("amount", DoubleArgumentType.doubleArg(0)).executes(context -> {
+                            if (context.getSource().getExecutor() instanceof Player p) {
+                                double amount = DoubleArgumentType.getDouble(context, "amount");
+                                if(Ecomonic.INSTANCE.deposit(Ecomonic.INSTANCE.getPrimaryAccount(p.getUniqueId()).getId(), amount)) {
+                                    p.sendMessage("You have given " + amount + " money to " + context.getArgument("player", Player.class).getName() + ".");
+                                } else {
+                                    p.sendMessage("Failed to give money. Please check your balance.");
+                                }
+                                return 1;
                             } else {
-                                p.sendMessage("Failed to give money. Please check your balance.");
+                                context.getSource().getSender().sendMessage(Component.text(ChatColor.RED + "You are not a player!"));
+                                return 0;
                             }
-                            return 1;
-                        } else {
-                            context.getSource().getSender().sendMessage(Component.text(ChatColor.RED + "You are not a player!"));
-                            return 0;
-                        }
-                    })
+                        })
+                    )
                 )
-            )
         );
 
         root.then(
@@ -100,49 +106,64 @@ public class CommandRegistrar {
         ).requires(sender -> sender.getSender().hasPermission("ecomonic.user.general"));
 
 
-        root.then(Commands.literal("request"))
-                .requires(sender -> sender.getSender().hasPermission("ecomonic.user.request"))
-                .then(Commands.argument("player", ArgumentTypes.player()))
-                .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0)));
+        root.then(
+                Commands.literal("request")
+                    .requires(sender -> sender.getSender().hasPermission("ecomonic.user.request"))
+                    .then(
+                        player()
+                            .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0)))
+                            .executes(context -> {
+                                return 1;
+                            })
+                    )
+        );
     }
 
     private void registerAdminCommands(LiteralArgumentBuilder<CommandSourceStack> root) {
         root.then(
             Commands.literal("set").requires(sender -> sender.getSender().hasPermission("ecomonic.admin")).then(
-                Commands.argument("player", ArgumentTypes.player()).then(
+                player().then(
                     Commands.argument("amount", DoubleArgumentType.doubleArg(0)).executes(context -> {
-                        if (context.getSource().getExecutor() instanceof Player p) {
-                            double amount = DoubleArgumentType.getDouble(context, "amount");
-                            Ecomonic.INSTANCE.getPrimaryAccount(p.getUniqueId()).set(amount);
-                            p.sendMessage(p.getName()+"'s balance has been set to " + amount);
-                            return 1;
-                        } else {
-                            context.getSource().getSender().sendMessage(Component.text(ChatColor.RED + "You are not a player!"));
-                            return 0;
-                        }
+                        Player p = Bukkit.getPlayer(StringArgumentType.getString(context, "player"));
+                        double amount = DoubleArgumentType.getDouble(context, "amount");
+                        Ecomonic.INSTANCE.getPrimaryAccount(p.getUniqueId()).set(amount);
+                        p.sendMessage(p.getName()+"'s balance has been set to " + amount);
+                        return 1;
                     })
                 )
             )
         );
 
         root.then(
-            Commands.literal("take").requires(sender -> sender.getSender().hasPermission("ecomonic.admin"))
+            Commands.literal("take")
+                .requires(sender -> sender.getSender().hasPermission("ecomonic.admin"))
                 .then(
-                    Commands.argument("player", ArgumentTypes.player()).then(
+                    player().then(
                         Commands.argument("amount", DoubleArgumentType.doubleArg(0)).executes(context -> {
-                            Player target = context.getArgument("player", Player.class);
+                            Player p = Bukkit.getPlayer(StringArgumentType.getString(context, "player"));
                             double amount = DoubleArgumentType.getDouble(context, "amount");
-                            if (target == null) {
+                            if (p == null) {
                                 context.getSource().getSender().sendMessage(Component.text(ChatColor.RED + " Target player not found!"));
                                 return 0;
                             }
-                            Ecomonic.INSTANCE.withdraw(Ecomonic.INSTANCE.getPrimaryAccount(target.getUniqueId()).getId(), amount);
-                            context.getSource().getSender().sendMessage(Component.text(ChatColor.GREEN + "You have taken " + amount + " money from " + target.getName() + "."));
-                            target.sendMessage(Component.text(ChatColor.RED + "An admin has taken " + amount + " money from your account."));
+                            Ecomonic.INSTANCE.withdraw(Ecomonic.INSTANCE.getPrimaryAccount(p.getUniqueId()).getId(), amount);
+                            context.getSource().getSender().sendMessage(Component.text(ChatColor.GREEN + "You have taken " + amount + " money from " + p.getName() + "."));
+                            p.sendMessage(Component.text(ChatColor.RED + "An admin has taken " + amount + " money from your account."));
                             return 1;
                         })
                     )
                 )
         );
+    }
+
+    @SuppressWarnings("unchecked")
+    private RequiredArgumentBuilder<CommandSourceStack, ?> player() {
+        return Commands.argument("player", StringArgumentType.word())
+                .suggests((context, builder) -> {
+                    for (Player player : Bukkit.getOnlinePlayers()) {
+                        builder.suggest(player.getName());
+                    }
+                    return builder.buildFuture();
+                });
     }
 }
