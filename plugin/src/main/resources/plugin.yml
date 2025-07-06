@@ -2,7 +2,3 @@ name: ecomonic
 version: '${version}'
 main: net.yellowstrawberry.ecomonic.EcomonicPlugin
 api-version: '1.21'
-commands:
-  money:
-    description: 'Money management commands'
-    usage: '/money <subcommand>'

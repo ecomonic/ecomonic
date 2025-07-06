@@ -24,6 +24,7 @@ public class DatabaseUtils {
     private static DriverShim driverShim;
 
     public static void downloadLibrary(DatabaseType type) throws IOException {
+        if(type == DatabaseType.SQLITE) return;
         File f = new File(Configurations.root + "/lib/" + type + ".jar");
         if(f.exists()) return;
 
@@ -32,7 +33,6 @@ public class DatabaseUtils {
             case MYSQL -> url = "https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/9.3.0/mysql-connector-j-9.3.0.jar";
             case MARIADB -> url = "https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/3.5.4/mariadb-java-client-3.5.4.jar";
             case POSTGRESQL -> url = "https://repo1.maven.org/maven2/org/postgresql/postgresql/42.7.7/postgresql-42.7.7.jar";
-            case SQLITE -> url = "https://repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.50.2.0/sqlite-jdbc-3.50.2.0.jar";
             default -> url = null;
         }
 
@@ -45,6 +45,7 @@ public class DatabaseUtils {
     }
 
     public static void loadLibrary(DatabaseType type) throws MalformedURLException {
+        if(type == DatabaseType.SQLITE) return;
         File f = new File(Configurations.root + "/lib/" + type + ".jar");
         DATABASE_CLASS_LOADER = new URLClassLoader(new URL[]{f.toURI().toURL()}, DatabaseUtils.class.getClassLoader());
 
