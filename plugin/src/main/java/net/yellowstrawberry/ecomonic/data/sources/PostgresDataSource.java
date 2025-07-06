@@ -126,7 +126,7 @@ public class PostgresDataSource implements DataSource {
     @Override
     public boolean withdraw(long id, double amount) {
         if (amount <= 0) return false;
-        return sql.executeUpdate("UPDATE ecomonic.accounts SET balance = balance - ?::money WHERE id = ? AND ? <= balance;", String.valueOf(amount), id, String.valueOf(amount)) != 0;
+        return sql.executeUpdate("UPDATE ecomonic.accounts SET balance = balance - ?::money WHERE id = ? AND ?::money <= balance;", String.valueOf(amount), id, String.valueOf(amount)) != 0;
     }
 
     @Override
